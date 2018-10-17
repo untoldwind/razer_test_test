@@ -9,7 +9,7 @@ mod cli;
 mod devices;
 mod errors;
 
-use clap::{App, Arg, SubCommand};
+use clap::{App, SubCommand};
 
 fn main() {
     let matches = App::new("razer_test test")

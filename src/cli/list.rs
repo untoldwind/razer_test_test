@@ -3,7 +3,7 @@ use errors::Result;
 
 pub fn list_devices() -> Result<()> {
     for device in devices::list_devices()? {
-        println!("{}", device.name());
+        println!("{} {:?}", device.name(), device.get_serial());
     }
 
     Ok(())

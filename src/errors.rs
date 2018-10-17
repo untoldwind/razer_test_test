@@ -3,10 +3,19 @@ error_chain! {
         Error, ErrorKind, ResultExt, Result;
     }
 
+    foreign_links {
+        CApi(::std::ffi::NulError);
+    }
+
     errors {
         Hidapi(t: ::hidapi::HidError) {
             description("hidapi error")
             display("hidapi error: '{}'", t)
+        }
+
+        NotSupported {
+            description("not supported")
+            display("not supported")
         }
     }
 }

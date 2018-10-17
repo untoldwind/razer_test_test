@@ -19,16 +19,22 @@ impl DeviceFactory for MatrixMiceFactory {
         self.name.clone()
     }
 
-    fn open(&self, path: &CStr) -> Result<Box<Device>> {
-        let api = HidApi::new()?;
-        let hid_device = api.open_path(path)?;
-
-        Ok(Box::new(MatrixMice { hid_device }))
+    fn open(&self, hid_device: HidDevice) -> Box<Device> {
+        Box::new(MatrixMice { name: self.name.clone(), hid_device })
     }
 }
 
 pub struct MatrixMice {
+    name: String,
     hid_device: HidDevice,
 }
 
-impl Device for MatrixMice {}
+impl Device for MatrixMice {
+    fn name(& self) -> String {
+        self.name.clone()
+    }
+
+    fn hid_device<'a>(&'a self) -> &'a HidDevice {
+        &self.hid_device
+    }
+}

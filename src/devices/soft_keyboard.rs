@@ -18,16 +18,22 @@ impl DeviceFactory for SoftKeyboardFactory {
         self.name.clone()
     }
 
-    fn open(&self, path: &CStr) -> Result<Box<Device>> {
-        let api = HidApi::new()?;
-        let hid_device = api.open_path(path)?;
-
-        Ok(Box::new(SoftKeyboard { hid_device }))
+    fn open(&self, hid_device: HidDevice) -> Box<Device> {
+        Box::new(SoftKeyboard { name: self.name.clone(), hid_device })
     }
 }
 
 pub struct SoftKeyboard {
+    name: String,
     hid_device: HidDevice,
 }
 
-impl Device for SoftKeyboard {}
+impl Device for SoftKeyboard {
+    fn name(&self) -> String {
+        self.name.clone()
+    }
+
+    fn hid_device<'a>(&'a self) -> &'a HidDevice {
+        &self.hid_device
+    }
+}
