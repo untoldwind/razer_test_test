@@ -1,40 +1,58 @@
+use super::razer_report::{Color, RazerReport, RazerVarstore};
 use super::{Device, DeviceFactory};
 use errors::Result;
-use hidapi::{HidApi, HidDevice};
-use std::ffi::CStr;
+use hidapi::HidDevice;
 
 #[derive(Clone, Debug)]
 pub struct MatrixMiceFactory {
-    name: String,
+    name: &'static str,
+    brightness_led: u8,
 }
 
 impl MatrixMiceFactory {
-    pub fn new<S: Into<String>>(name: S) -> Box<MatrixMiceFactory> {
-        Box::new(MatrixMiceFactory { name: name.into() })
+    pub fn new(name: &'static str, brightness_led: u8) -> Box<MatrixMiceFactory> {
+        Box::new(MatrixMiceFactory { name, brightness_led })
     }
 }
 
 impl DeviceFactory for MatrixMiceFactory {
-    fn name(&self) -> String {
-        self.name.clone()
+    fn name(&self) -> &'static str {
+        self.name
     }
 
     fn open(&self, hid_device: HidDevice) -> Box<Device> {
-        Box::new(MatrixMice { name: self.name.clone(), hid_device })
+        Box::new(MatrixMice {
+            name: self.name,
+            brightness_led: self.brightness_led,
+            hid_device,
+        })
     }
 }
 
 pub struct MatrixMice {
-    name: String,
+    name: &'static str,
+    brightness_led: u8,
     hid_device: HidDevice,
 }
 
 impl Device for MatrixMice {
-    fn name(& self) -> String {
-        self.name.clone()
+    fn name(&self) -> &'static str {
+        self.name
     }
 
     fn hid_device<'a>(&'a self) -> &'a HidDevice {
         &self.hid_device
+    }
+
+    fn get_brightness(&self) -> Result<u8> {
+        self.send_report(RazerReport::matrix_get_brightness(
+            RazerVarstore::Store,
+            self.brightness_led,
+        ))?;
+        Ok(0)
+    }
+
+    fn set_color(&self, color: Color) -> Result<()> {
+        Ok(())
     }
 }

@@ -4,12 +4,13 @@ mod matrix_mice;
 mod razer_report;
 mod soft_keyboard;
 
+pub use self::razer_report::Color;
 use errors::{Error, ErrorKind, Result};
 use hidapi::{HidApi, HidDevice};
-use std::ffi::{CStr, CString};
+use log::Level;
+use std::ffi::CString;
 use std::thread;
 use std::time;
-use hex;
 
 use self::matrix_mice::MatrixMiceFactory;
 use self::razer_report::{RazerReport, RazerStatus};
@@ -25,18 +26,22 @@ pub struct DeviceId {
 }
 
 pub trait DeviceFactory: Sync {
-    fn name(&self) -> String;
+    fn name(&self) -> &'static str;
 
     fn open(&self, hid_device: HidDevice) -> Box<Device>;
 }
 
 pub trait Device {
-    fn name(&self) -> String;
+    fn name(&self) -> &'static str;
 
     fn hid_device<'a>(&'a self) -> &'a HidDevice;
 
+    fn get_brightness(&self) -> Result<u8>;
+
+    fn set_color(&self, color: Color) -> Result<()>;
+
     fn get_manufacturer(&self) -> Result<Option<String>> {
-        Ok(self.hid_device().get_manufacturer_string()?)        
+        Ok(self.hid_device().get_manufacturer_string()?)
     }
 
     fn get_product(&self) -> Result<Option<String>> {
@@ -50,6 +55,9 @@ pub trait Device {
         let mut last_error: Error = ErrorKind::NotSuccessful.into();
 
         for retry in 0..3 {
+            if log_enabled!(Level::Debug) {
+                debug!("Sending  >>>: {:?}", request);
+            }
             match self.hid_device().send_feature_report(request.as_raw()) {
                 Ok(_) => (),
                 Err(error) => {
@@ -71,6 +79,9 @@ pub trait Device {
                     continue;
                 }
             }
+            if log_enabled!(Level::Debug) {
+                debug!("Received <<<: {:?}", result);
+            }
 
             if result.status == RazerStatus::NotSupported as u8 {
                 return Err(ErrorKind::NotSupported.into());
@@ -86,8 +97,13 @@ pub trait Device {
         let result = self.send_report(RazerReport::standard_get_serial())?;
         let mut size = result.data_size as usize;
 
-        size = result.arguments.iter().take(size).position(|c| *c == 0x0).unwrap_or(size);
-        
+        size = result
+            .arguments
+            .iter()
+            .take(size)
+            .position(|c| *c == 0x0)
+            .unwrap_or(size);
+
         Ok(CString::new(&result.arguments[0..size])?)
     }
 }
@@ -108,7 +124,7 @@ lazy_static! {
 
         map.insert(
             DeviceId::new(RAZER_VENDOR, 0x0060, 0),
-            MatrixMiceFactory::new("Razer Lancehead TE"),
+            MatrixMiceFactory::new("Razer Lancehead TE", 1),
         );
         map.insert(
             DeviceId::new(RAZER_VENDOR, 0x0226, 0),
