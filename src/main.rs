@@ -4,6 +4,7 @@ extern crate hidapi;
 extern crate error_chain;
 #[macro_use]
 extern crate lazy_static;
+extern crate hex;
 
 mod cli;
 mod devices;

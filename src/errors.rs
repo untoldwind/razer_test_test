@@ -4,13 +4,19 @@ error_chain! {
     }
 
     foreign_links {
-        CApi(::std::ffi::NulError);
+        CString(::std::ffi::NulError);
+        CStr(::std::ffi::FromBytesWithNulError);
     }
 
     errors {
         Hidapi(t: ::hidapi::HidError) {
             description("hidapi error")
             display("hidapi error: '{}'", t)
+        }
+
+        NotSuccessful {
+            description("not successful")
+            display("not successful")
         }
 
         NotSupported {

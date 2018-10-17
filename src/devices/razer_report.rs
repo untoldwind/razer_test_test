@@ -10,7 +10,7 @@ pub enum RazerStatus {
     NotSupported = 0x05,
 }
 
-#[repr(C)]
+#[repr(packed)]
 pub struct RazerReport {
     pub report_id: u8,
     pub status: u8,
@@ -39,7 +39,7 @@ impl RazerReport {
         {
             let raw = self.as_raw();
 
-            for i in 3..89 {
+            for i in 4..90 {
                 crc ^= raw[i]
             }
         }

@@ -9,6 +9,7 @@ use hidapi::{HidApi, HidDevice};
 use std::ffi::{CStr, CString};
 use std::thread;
 use std::time;
+use hex;
 
 use self::matrix_mice::MatrixMiceFactory;
 use self::razer_report::{RazerReport, RazerStatus};
@@ -34,18 +35,25 @@ pub trait Device {
 
     fn hid_device<'a>(&'a self) -> &'a HidDevice;
 
+    fn get_manufacturer(&self) -> Result<Option<String>> {
+        Ok(self.hid_device().get_manufacturer_string()?)        
+    }
+
+    fn get_product(&self) -> Result<Option<String>> {
+        Ok(self.hid_device().get_product_string()?)
+    }
+
     fn send_report(&self, mut request: RazerReport) -> Result<RazerReport> {
         let mut result: RazerReport = Default::default();
         request.calculate_crc();
 
-        let mut last_error: Option<Error> = None;
+        let mut last_error: Error = ErrorKind::NotSuccessful.into();
 
         for retry in 0..3 {
             match self.hid_device().send_feature_report(request.as_raw()) {
                 Ok(_) => (),
                 Err(error) => {
-                    println!("One: {:?}", error);
-                    last_error = Some(error.into());
+                    last_error = error.into();
                     continue;
                 }
             }
@@ -59,13 +67,11 @@ pub trait Device {
             match self.hid_device().get_feature_report(result.as_mut_raw()) {
                 Ok(_) => (),
                 Err(error) => {
-                    println!("Two: {:?}", error);
-                    last_error = Some(error.into());
+                    last_error = error.into();
                     continue;
                 }
             }
 
-            println!("{}", result.status);
             if result.status == RazerStatus::NotSupported as u8 {
                 return Err(ErrorKind::NotSupported.into());
             } else if result.status == RazerStatus::Successful as u8 {
@@ -73,14 +79,16 @@ pub trait Device {
             }
         }
 
-        println!("{:?}", last_error);
-        Err(last_error.unwrap())
+        Err(last_error)
     }
 
     fn get_serial(&self) -> Result<CString> {
         let result = self.send_report(RazerReport::standard_get_serial())?;
+        let mut size = result.data_size as usize;
 
-        Ok(CString::new(&result.arguments[..])?)
+        size = result.arguments.iter().take(size).position(|c| *c == 0x0).unwrap_or(size);
+        
+        Ok(CString::new(&result.arguments[0..size])?)
     }
 }
 
@@ -102,10 +110,10 @@ lazy_static! {
             DeviceId::new(RAZER_VENDOR, 0x0060, 0),
             MatrixMiceFactory::new("Razer Lancehead TE"),
         );
-/*        map.insert(
+        map.insert(
             DeviceId::new(RAZER_VENDOR, 0x0226, 0),
             SoftKeyboardFactory::new("Razer Huntsman Elite"),
-        );*/
+        );
         map
     };
 }
@@ -114,13 +122,15 @@ pub fn list_devices() -> Result<Vec<Box<Device>>> {
     let api = HidApi::new()?;
     let mut devices: Vec<Box<Device>> = Vec::new();
 
-    for hid_device in api.devices() {
+    for hid_device_info in api.devices() {
         if let Some(device_factory) = known_devices.get(&DeviceId::new(
-            hid_device.vendor_id,
-            hid_device.product_id,
-            hid_device.interface_number,
+            hid_device_info.vendor_id,
+            hid_device_info.product_id,
+            hid_device_info.interface_number,
         )) {
-            devices.push(device_factory.open(hid_device.open_device(&api)?));
+            let hid_device = hid_device_info.open_device(&api)?;
+
+            devices.push(device_factory.open(hid_device));
         }
     }
 
