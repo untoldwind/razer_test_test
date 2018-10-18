@@ -48,7 +48,7 @@ impl Device for SoftKeyboard {
     fn set_color(&self, color: Color) -> Result<()> {
         let colors = [color; 23];
         for row in 0..9 {
-         self.send_report(RazerReport::soft_matrix_frame(row, 0, &colors))?;
+            self.send_report(RazerReport::soft_matrix_frame(row, 0, &colors))?;
         }
         Ok(())
     }

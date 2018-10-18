@@ -124,7 +124,7 @@ lazy_static! {
 
         map.insert(
             DeviceId::new(RAZER_VENDOR, 0x0060, 0),
-            MatrixMiceFactory::new("Razer Lancehead TE", 1),
+            MatrixMiceFactory::new("Razer Lancehead TE", &[1, 4, 16, 17]),
         );
         map.insert(
             DeviceId::new(RAZER_VENDOR, 0x0226, 0),

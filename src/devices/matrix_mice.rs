@@ -1,4 +1,4 @@
-use super::razer_report::{Color, RazerReport, RazerVarstore};
+use super::razer_report::{Color, RazerMouseMatrixEffectId, RazerReport, RazerVarstore};
 use super::{Device, DeviceFactory};
 use errors::Result;
 use hidapi::HidDevice;
@@ -6,12 +6,12 @@ use hidapi::HidDevice;
 #[derive(Clone, Debug)]
 pub struct MatrixMiceFactory {
     name: &'static str,
-    brightness_led: u8,
+    led_ids: &'static [u8],
 }
 
 impl MatrixMiceFactory {
-    pub fn new(name: &'static str, brightness_led: u8) -> Box<MatrixMiceFactory> {
-        Box::new(MatrixMiceFactory { name, brightness_led })
+    pub fn new(name: &'static str, led_ids: &'static [u8]) -> Box<MatrixMiceFactory> {
+        Box::new(MatrixMiceFactory { name, led_ids })
     }
 }
 
@@ -23,7 +23,7 @@ impl DeviceFactory for MatrixMiceFactory {
     fn open(&self, hid_device: HidDevice) -> Box<Device> {
         Box::new(MatrixMice {
             name: self.name,
-            brightness_led: self.brightness_led,
+            led_ids: self.led_ids,
             hid_device,
         })
     }
@@ -31,7 +31,7 @@ impl DeviceFactory for MatrixMiceFactory {
 
 pub struct MatrixMice {
     name: &'static str,
-    brightness_led: u8,
+    led_ids: &'static [u8],
     hid_device: HidDevice,
 }
 
@@ -47,12 +47,25 @@ impl Device for MatrixMice {
     fn get_brightness(&self) -> Result<u8> {
         self.send_report(RazerReport::matrix_get_brightness(
             RazerVarstore::Store,
-            self.brightness_led,
+            self.led_ids[0],
         ))?;
         Ok(0)
     }
 
     fn set_color(&self, color: Color) -> Result<()> {
+        for led_id in self.led_ids {
+            let mut report = RazerReport::extended_mouse_matrix_effect(
+                RazerVarstore::Store,
+                *led_id,
+                RazerMouseMatrixEffectId::Static,
+            );
+            report.arguments[5] = 1;
+            report.arguments[6] = color.red;
+            report.arguments[7] = color.green;
+            report.arguments[8] = color.blue;
+
+            self.send_report(report)?;
+        }
         Ok(())
     }
 }
