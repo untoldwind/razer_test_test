@@ -132,7 +132,7 @@ impl RazerReport {
         report
     }
 
-    pub fn matrix_get_brightness(store: RazerVarstore, led_id: u8) -> RazerReport {
+    pub fn extended_matrix_get_brightness(store: RazerVarstore, led_id: u8) -> RazerReport {
         let mut report = RazerReport {
             transaction_id: 0x1f,
             command_class: 0xf,
@@ -142,6 +142,21 @@ impl RazerReport {
         };
         report.arguments[0] = store as u8;
         report.arguments[1] = led_id;
+
+        report
+    }
+
+    pub fn extended_matrix_set_brightness(store: RazerVarstore, led_id: u8, brightness: u8) -> RazerReport {
+        let mut report = RazerReport {
+            transaction_id: 0x1f,
+            command_class: 0xf,
+            command_id: 0x04,
+            data_size: 0x3,
+            ..Default::default()
+        };
+        report.arguments[0] = store as u8;
+        report.arguments[1] = led_id;
+        report.arguments[2] = brightness;
 
         report
     }

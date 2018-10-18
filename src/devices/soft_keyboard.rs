@@ -41,8 +41,17 @@ impl Device for SoftKeyboard {
     }
 
     fn get_brightness(&self) -> Result<u8> {
-        self.send_report(RazerReport::matrix_get_brightness(RazerVarstore::Store, 0))?;
+        self.send_report(RazerReport::extended_matrix_get_brightness(RazerVarstore::Store, 0))?;
         Ok(0)
+    }
+
+    fn set_brightness(&self, brightness: u8) -> Result<()> {
+        self.send_report(RazerReport::extended_matrix_set_brightness(
+            RazerVarstore::Store,
+            0,
+            brightness,
+        ))?;
+        Ok(())
     }
 
     fn set_color(&self, color: Color) -> Result<()> {

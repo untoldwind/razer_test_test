@@ -45,11 +45,22 @@ impl Device for MatrixMice {
     }
 
     fn get_brightness(&self) -> Result<u8> {
-        self.send_report(RazerReport::matrix_get_brightness(
+        self.send_report(RazerReport::extended_matrix_get_brightness(
             RazerVarstore::Store,
             self.led_ids[0],
         ))?;
         Ok(0)
+    }
+
+    fn set_brightness(&self, brightness: u8) -> Result<()> {
+        for led_id in self.led_ids {
+            self.send_report(RazerReport::extended_matrix_set_brightness(
+                RazerVarstore::Store,
+                *led_id,
+                brightness,
+            ))?;
+        }
+        Ok(())
     }
 
     fn set_color(&self, color: Color) -> Result<()> {

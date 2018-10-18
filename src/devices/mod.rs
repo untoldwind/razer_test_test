@@ -38,6 +38,8 @@ pub trait Device {
 
     fn get_brightness(&self) -> Result<u8>;
 
+    fn set_brightness(&self, brightness: u8) -> Result<()>;
+
     fn set_color(&self, color: Color) -> Result<()>;
 
     fn get_manufacturer(&self) -> Result<Option<String>> {
