@@ -1,12 +1,12 @@
-use devices;
+use devices::{self, Color};
 use errors::Result;
 
-pub fn set_color() -> Result<()> {
+pub fn set_color(color: Color) -> Result<()> {
     for device in devices::list_devices()? {
         println!(
             "{} {:?}",
             device.name(),
-            device.set_color(devices::Color::new(255, 255, 255))
+            device.set_color(color)
         );
     }
 

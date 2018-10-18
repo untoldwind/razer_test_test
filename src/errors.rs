@@ -23,6 +23,11 @@ error_chain! {
             description("not supported")
             display("not supported")
         }
+
+        InvalidColorFormat {
+            description("invalid color format")
+            display("invalid color format")
+        }
     }
 }
 

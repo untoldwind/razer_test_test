@@ -4,6 +4,8 @@ use std::mem;
 use std::ptr;
 use std::slice;
 
+use errors::{ErrorKind, Result};
+
 #[allow(dead_code)]
 pub enum RazerStatus {
     New = 0x00,
@@ -41,12 +43,23 @@ pub struct Color {
 }
 
 impl Color {
+    #[allow(dead_code)]
     pub fn new(red: u8, green: u8, blue: u8) -> Color {
         Color { red, green, blue }
     }
 
-    pub fn as_raw(&self) -> &[u8] {
-        unsafe { slice::from_raw_parts((self as *const Self) as *const u8, mem::size_of::<Self>()) }
+    pub fn parse(color_str: &str) -> Result<Color> {
+        let parts: Vec<u8> = color_str.split(',').map(|p| p.parse::<u8>().unwrap_or(0)).collect();
+
+        if parts.len() != 3 {
+            return Err(ErrorKind::InvalidColorFormat.into());
+        }
+
+        Ok(Color {
+            red: parts[0],
+            green: parts[1],
+            blue: parts[2],
+        })
     }
 }
 
