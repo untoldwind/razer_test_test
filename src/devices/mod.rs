@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+mod matrix_keyboard;
 mod matrix_mice;
 mod razer_report;
 mod soft_keyboard;
@@ -12,6 +13,7 @@ use std::ffi::CString;
 use std::thread;
 use std::time;
 
+use self::matrix_keyboard::MatrixKeyboardFactory;
 use self::matrix_mice::MatrixMiceFactory;
 use self::razer_report::{RazerReport, RazerStatus};
 use self::soft_keyboard::SoftKeyboardFactory;
@@ -131,6 +133,10 @@ lazy_static! {
         map.insert(
             DeviceId::new(RAZER_VENDOR, 0x0226, 0),
             SoftKeyboardFactory::new("Razer Huntsman Elite"),
+        );
+        map.insert(
+            DeviceId::new(RAZER_VENDOR, 0x0221, 0),
+            MatrixKeyboardFactory::new("Razer BlackWidow Chroma V2", &[5]),
         );
         map
     };

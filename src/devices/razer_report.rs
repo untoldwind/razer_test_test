@@ -34,6 +34,19 @@ pub enum RazerMouseMatrixEffectId {
     CustomFrame = 0x08,
 }
 
+#[allow(dead_code)]
+pub enum RazerMatrixEffectId {
+    Off         = 0x00,
+    Wave        = 0x01,
+    Reactive    = 0x02, 
+    Breathing   = 0x03,
+    Spectrum    = 0x04,
+    CustomFrame = 0x05,
+    Static      = 0x06,
+    Starlight   = 0x19
+}
+
+
 #[derive(Default, Clone, Copy)]
 #[repr(packed)]
 pub struct Color {
@@ -176,6 +189,48 @@ impl RazerReport {
         report.arguments[0] = store as u8;
         report.arguments[1] = led_id;
         report.arguments[2] = effect as u8;
+
+        report
+    }
+
+    pub fn standard_get_led_brightness(store: RazerVarstore, led_id: u8) -> RazerReport {
+        let mut report = RazerReport {
+            transaction_id: 0x1f,
+            command_class: 0x3,
+            command_id: 0x83,
+            data_size: 0x3,
+            ..Default::default()
+        };
+        report.arguments[0] = store as u8;
+        report.arguments[1] = led_id;
+
+        report
+    }
+
+    pub fn standard_set_led_brightness(store: RazerVarstore, led_id: u8, brightness: u8) -> RazerReport {
+        let mut report = RazerReport {
+            transaction_id: 0x1f,
+            command_class: 0x3,
+            command_id: 0x3,
+            data_size: 0x3,
+            ..Default::default()
+        };
+        report.arguments[0] = store as u8;
+        report.arguments[1] = led_id;
+        report.arguments[2] = brightness;
+
+        report
+    }
+
+    pub fn standard_matrix_effect(effect: RazerMatrixEffectId) -> RazerReport {
+        let mut report = RazerReport {
+            transaction_id: 0x1f,
+            command_class: 0x3,
+            command_id: 0x0a,
+            data_size: 80,
+            ..Default::default()
+        };
+        report.arguments[0] = effect as u8;
 
         report
     }
